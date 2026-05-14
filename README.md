@@ -4,7 +4,7 @@ Simple Telegram bot on Go (telego) that builds messages in this format:
 
 `<name> thinks that: <text>`
 
-`<text>` is sent in _italic_ formatting.
+The generated message is sent in _italic_ formatting.
 
 `<name>` is resolved with this priority:
 

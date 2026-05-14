@@ -106,7 +106,7 @@ func TestBuildIRCMeMessageHTML(t *testing.T) {
 		"1 < 2 & 3",
 	)
 
-	want := "&lt;nick&gt; thinks that: <i>1 &lt; 2 &amp; 3</i>"
+	want := "<i>&lt;nick&gt; thinks that: 1 &lt; 2 &amp; 3</i>"
 	if got != want {
 		t.Fatalf("buildIRCMeMessageHTML() = %q, want %q", got, want)
 	}
@@ -225,7 +225,7 @@ func TestHandleInlineQuerySuccess(t *testing.T) {
 		t.Fatalf("parse mode = %q, want %q", textContent.ParseMode, telego.ModeHTML)
 	}
 
-	if textContent.MessageText != "nick thinks that: <i>hello world</i>" {
+	if textContent.MessageText != "<i>nick thinks that: hello world</i>" {
 		t.Fatalf("message text = %q", textContent.MessageText)
 	}
 }
@@ -339,7 +339,7 @@ func TestHandleMessageMeCommandSuccess(t *testing.T) {
 	if mockBot.sendMessageParams.ChatID.ID != -100123 {
 		t.Fatalf("SendMessage chat id = %d, want %d", mockBot.sendMessageParams.ChatID.ID, -100123)
 	}
-	if mockBot.sendMessageParams.Text != "nick thinks that: <i>hello world</i>" {
+	if mockBot.sendMessageParams.Text != "<i>nick thinks that: hello world</i>" {
 		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
 	}
 	if mockBot.sendMessageParams.ParseMode != telego.ModeHTML {
@@ -412,7 +412,7 @@ func TestHandleMessageMeCommandWithoutTextUsesDefault(t *testing.T) {
 	if mockBot.sendMessageParams == nil {
 		t.Fatalf("SendMessage params are nil")
 	}
-	if mockBot.sendMessageParams.Text != "John thinks that: <i>...</i>" {
+	if mockBot.sendMessageParams.Text != "<i>John thinks that: ...</i>" {
 		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
 	}
 	if mockBot.sendMessageParams.ParseMode != telego.ModeHTML {
