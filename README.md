@@ -28,3 +28,21 @@ The generated message is sent in _italic_ formatting.
 export TELEGRAM_BOT_TOKEN="<your_bot_token>"
 go run ./cmd/bot
 ```
+
+## Run In Docker
+
+Build image:
+
+```bash
+docker build -t ircme-bot .
+```
+
+Run container:
+
+```bash
+docker run --restart unless-stopped \
+  --name ircme_bot \
+  -d \
+  -e TELEGRAM_BOT_TOKEN="<your_bot_token>" \
+  ircme-bot
+```
