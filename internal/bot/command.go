@@ -49,7 +49,13 @@ func (h *CommandHandler) handleMeCommand(ctx context.Context, message *telego.Me
 
 	chatID := telego.ChatID{ID: message.Chat.ID}
 	response := buildIRCMeMessageHTML(resolveMessageSender(message), commandText)
-	if _, err := h.bot.SendMessage(ctx, tu.Message(chatID, response).WithParseMode(telego.ModeHTML)); err != nil {
+	sendParams := tu.Message(chatID, response).WithParseMode(telego.ModeHTML)
+	if message.ReplyToMessage != nil {
+		sendParams = sendParams.WithReplyParameters(&telego.ReplyParameters{
+			MessageID: message.ReplyToMessage.MessageID,
+		})
+	}
+	if _, err := h.bot.SendMessage(ctx, sendParams); err != nil {
 		return fmt.Errorf("send /me response in chat %d: %w", message.Chat.ID, err)
 	}
 
