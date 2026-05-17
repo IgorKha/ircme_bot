@@ -106,7 +106,7 @@ func TestBuildIRCMeMessageHTML(t *testing.T) {
 		"1 < 2 & 3",
 	)
 
-	want := "<i>&lt;nick&gt; thinks that: 1 &lt; 2 &amp; 3</i>"
+	want := "<i>@&lt;nick&gt; 1 &lt; 2 &amp; 3</i>"
 	if got != want {
 		t.Fatalf("buildIRCMeMessageHTML() = %q, want %q", got, want)
 	}
@@ -158,12 +158,12 @@ func TestExtractMeCommandText(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, ok := extractMeCommandText(tc.text)
+			got, ok := extractCommandText(tc.text, "me")
 			if ok != tc.ok {
-				t.Fatalf("extractMeCommandText() ok = %v, want %v", ok, tc.ok)
+				t.Fatalf("extractCommandText() ok = %v, want %v", ok, tc.ok)
 			}
 			if got != tc.want {
-				t.Fatalf("extractMeCommandText() text = %q, want %q", got, tc.want)
+				t.Fatalf("extractCommandText() text = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -225,7 +225,7 @@ func TestHandleInlineQuerySuccess(t *testing.T) {
 		t.Fatalf("parse mode = %q, want %q", textContent.ParseMode, telego.ModeHTML)
 	}
 
-	if textContent.MessageText != "<i>nick thinks that: hello world</i>" {
+	if textContent.MessageText != "<i>@nick hello world</i>" {
 		t.Fatalf("message text = %q", textContent.MessageText)
 	}
 }
@@ -339,7 +339,7 @@ func TestHandleMessageMeCommandSuccess(t *testing.T) {
 	if mockBot.sendMessageParams.ChatID.ID != -100123 {
 		t.Fatalf("SendMessage chat id = %d, want %d", mockBot.sendMessageParams.ChatID.ID, -100123)
 	}
-	if mockBot.sendMessageParams.Text != "<i>nick thinks that: hello world</i>" {
+	if mockBot.sendMessageParams.Text != "<i>@nick hello world</i>" {
 		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
 	}
 	if mockBot.sendMessageParams.ParseMode != telego.ModeHTML {
@@ -412,7 +412,7 @@ func TestHandleMessageMeCommandWithoutTextUsesDefault(t *testing.T) {
 	if mockBot.sendMessageParams == nil {
 		t.Fatalf("SendMessage params are nil")
 	}
-	if mockBot.sendMessageParams.Text != "<i>John thinks that: ...</i>" {
+	if mockBot.sendMessageParams.Text != "<i>@John ...</i>" {
 		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
 	}
 	if mockBot.sendMessageParams.ParseMode != telego.ModeHTML {

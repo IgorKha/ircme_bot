@@ -36,19 +36,23 @@ func (h *CommandHandler) Handle(ctx context.Context, update telego.Update) error
 		return nil
 	}
 
-	return h.handleMeCommand(ctx, update.Message)
-}
+	message := update.Message
 
-func (h *CommandHandler) handleMeCommand(ctx context.Context, message *telego.Message) error {
-	commandText, ok := extractMeCommandText(message.Text)
-	if !ok {
-		return nil
+	if commandText, ok := extractCommandText(message.Text, "me"); ok {
+		h.logger.Debug("handling /me command", "chat_id", message.Chat.ID, "message_id", message.MessageID)
+		return h.executeCommand(ctx, message, buildIRCMeMessageHTML(resolveMessageSender(message), commandText))
 	}
 
-	h.logger.Debug("handling /me command", "chat_id", message.Chat.ID, "message_id", message.MessageID)
+	if commandText, ok := extractCommandText(message.Text, "ame"); ok {
+		h.logger.Debug("handling /ame command", "chat_id", message.Chat.ID, "message_id", message.MessageID)
+		return h.executeCommand(ctx, message, buildIRCAnonymousMessageHTML(commandText))
+	}
 
+	return nil
+}
+
+func (h *CommandHandler) executeCommand(ctx context.Context, message *telego.Message, response string) error {
 	chatID := telego.ChatID{ID: message.Chat.ID}
-	response := buildIRCMeMessageHTML(resolveMessageSender(message), commandText)
 	sendParams := tu.Message(chatID, response).WithParseMode(telego.ModeHTML)
 	if message.ReplyToMessage != nil {
 		sendParams = sendParams.WithReplyParameters(&telego.ReplyParameters{
@@ -56,17 +60,17 @@ func (h *CommandHandler) handleMeCommand(ctx context.Context, message *telego.Me
 		})
 	}
 	if _, err := h.bot.SendMessage(ctx, sendParams); err != nil {
-		return fmt.Errorf("send /me response in chat %d: %w", message.Chat.ID, err)
+		return fmt.Errorf("send response in chat %d: %w", message.Chat.ID, err)
 	}
 
 	if err := h.bot.DeleteMessage(ctx, tu.Delete(chatID, message.MessageID)); err != nil {
-		return fmt.Errorf("delete /me command message %d in chat %d: %w", message.MessageID, message.Chat.ID, err)
+		return fmt.Errorf("delete command message %d in chat %d: %w", message.MessageID, message.Chat.ID, err)
 	}
 
 	return nil
 }
 
-func extractMeCommandText(text string) (string, bool) {
+func extractCommandText(text, command string) (string, bool) {
 	trimmed := strings.TrimSpace(text)
 	if trimmed == "" {
 		return "", false
@@ -81,9 +85,9 @@ func extractMeCommandText(text string) (string, bool) {
 		return "", false
 	}
 
-	command := strings.TrimPrefix(parts[0], "/")
-	command = strings.SplitN(command, "@", 2)[0]
-	if command != "me" {
+	cmd := strings.TrimPrefix(parts[0], "/")
+	cmd = strings.SplitN(cmd, "@", 2)[0]
+	if cmd != command {
 		return "", false
 	}
 

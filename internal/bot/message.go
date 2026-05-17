@@ -15,7 +15,12 @@ func buildIRCMeMessage(user telego.User, query string) string {
 func buildIRCMeMessageHTML(user telego.User, query string) string {
 	name := html.EscapeString(resolveDisplayName(user))
 	text := html.EscapeString(normalizeIRCMeText(query))
-	return fmt.Sprintf("<i>%s %s</i>", name, text)
+	return fmt.Sprintf("<i>@%s %s</i>", name, text)
+}
+
+func buildIRCAnonymousMessageHTML(query string) string {
+	text := html.EscapeString(normalizeIRCMeText(query))
+	return fmt.Sprintf("<i>%s</i>", text)
 }
 
 func resolveDisplayName(user telego.User) string {
