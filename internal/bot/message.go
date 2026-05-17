@@ -23,6 +23,26 @@ func buildIRCAnonymousMessageHTML(query string) string {
 	return fmt.Sprintf("<i>%s</i>", text)
 }
 
+func buildIRCSlapMessageHTML(sender telego.User, target string) string {
+	name := html.EscapeString(resolveDisplayName(sender))
+	t := strings.TrimPrefix(strings.TrimSpace(target), "@")
+	if t == "" {
+		t = resolveDisplayName(sender)
+	}
+	t = html.EscapeString(t)
+	return fmt.Sprintf("<i>* @%s slaps @%s around a bit with a large trout</i>", name, t)
+}
+
+func resolveSlapTarget(commandText string, message *telego.Message) string {
+	if t := strings.TrimSpace(commandText); t != "" {
+		return t
+	}
+	if message.ReplyToMessage != nil {
+		return resolveDisplayName(resolveMessageSender(message.ReplyToMessage))
+	}
+	return ""
+}
+
 func resolveDisplayName(user telego.User) string {
 	username := strings.TrimSpace(user.Username)
 	if username != "" {

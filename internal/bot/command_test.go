@@ -255,3 +255,119 @@ func TestCommandHandlerIgnoresInlineUpdates(t *testing.T) {
 		t.Fatalf("DeleteMessage should not be called for InlineQuery updates")
 	}
 }
+
+func TestHandleSlapCommandWithTarget(t *testing.T) {
+	t.Parallel()
+
+	mockBot := &mockBot{}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewCommandHandler(mockBot, logger)
+
+	update := telego.Update{
+		Message: &telego.Message{
+			MessageID: 99,
+			From:      &telego.User{Username: "nick"},
+			Chat:      telego.Chat{ID: -100123},
+			Text:      "/slap bob",
+		},
+	}
+
+	if err := handler.Handle(context.Background(), update); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	if !mockBot.sendMessageCalled {
+		t.Fatalf("SendMessage was not called")
+	}
+	if mockBot.sendMessageParams.Text != "<i>* @nick slaps @bob around a bit with a large trout</i>" {
+		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
+	}
+	if mockBot.sendMessageParams.ParseMode != telego.ModeHTML {
+		t.Fatalf("SendMessage parse mode = %q, want %q", mockBot.sendMessageParams.ParseMode, telego.ModeHTML)
+	}
+	if !mockBot.deleteMessageCalled {
+		t.Fatalf("DeleteMessage was not called")
+	}
+	if mockBot.deleteMessageParams.MessageID != 99 {
+		t.Fatalf("DeleteMessage message id = %d, want %d", mockBot.deleteMessageParams.MessageID, 99)
+	}
+}
+
+func TestHandleSlapCommandWithoutTargetSelfSlap(t *testing.T) {
+	t.Parallel()
+
+	mockBot := &mockBot{}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewCommandHandler(mockBot, logger)
+
+	update := telego.Update{
+		Message: &telego.Message{
+			MessageID: 100,
+			From:      &telego.User{Username: "nick"},
+			Chat:      telego.Chat{ID: -100123},
+			Text:      "/slap",
+		},
+	}
+
+	if err := handler.Handle(context.Background(), update); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	if mockBot.sendMessageParams.Text != "<i>* @nick slaps @nick around a bit with a large trout</i>" {
+		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
+	}
+}
+
+func TestHandleSlapCommandWithAtPrefixTarget(t *testing.T) {
+	t.Parallel()
+
+	mockBot := &mockBot{}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewCommandHandler(mockBot, logger)
+
+	update := telego.Update{
+		Message: &telego.Message{
+			MessageID: 101,
+			From:      &telego.User{Username: "nick"},
+			Chat:      telego.Chat{ID: -100123},
+			Text:      "/slap @bob",
+		},
+	}
+
+	if err := handler.Handle(context.Background(), update); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	if mockBot.sendMessageParams.Text != "<i>* @nick slaps @bob around a bit with a large trout</i>" {
+		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
+	}
+}
+
+func TestHandleSlapCommandWithReplyTarget(t *testing.T) {
+	t.Parallel()
+
+	mockBot := &mockBot{}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewCommandHandler(mockBot, logger)
+
+	update := telego.Update{
+		Message: &telego.Message{
+			MessageID: 102,
+			From:      &telego.User{Username: "nick"},
+			Chat:      telego.Chat{ID: -100123},
+			Text:      "/slap",
+			ReplyToMessage: &telego.Message{
+				MessageID: 50,
+				From:      &telego.User{Username: "alice"},
+			},
+		},
+	}
+
+	if err := handler.Handle(context.Background(), update); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	if mockBot.sendMessageParams.Text != "<i>* @nick slaps @alice around a bit with a large trout</i>" {
+		t.Fatalf("SendMessage text = %q", mockBot.sendMessageParams.Text)
+	}
+}

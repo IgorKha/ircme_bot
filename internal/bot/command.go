@@ -48,6 +48,11 @@ func (h *CommandHandler) Handle(ctx context.Context, update telego.Update) error
 		return h.executeCommand(ctx, message, buildIRCAnonymousMessageHTML(commandText))
 	}
 
+	if commandText, ok := extractCommandText(message.Text, "slap"); ok {
+		h.logger.Debug("handling /slap command", "chat_id", message.Chat.ID, "message_id", message.MessageID)
+		return h.executeCommand(ctx, message, buildIRCSlapMessageHTML(resolveMessageSender(message), resolveSlapTarget(commandText, message)))
+	}
+
 	return nil
 }
 
